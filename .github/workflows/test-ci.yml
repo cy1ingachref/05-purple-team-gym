@@ -1,0 +1,30 @@
+# Purple-team coevolution gym — prove the agents learn + survive a zero-day,
+# then build the offline dashboard. Zero dependencies (stdlib only).
+name: Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Unit tests (learning + zero-day adaptation)
+        run: python -m unittest tests.test_gym -v
+      - name: Run gym + build dashboard
+        run: |
+          python gym.py
+          python build_dashboard.py
+      - name: Upload dashboard artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: purple-team-dashboard
+          path: dashboard.html
+          if-no-files-found: ignore
