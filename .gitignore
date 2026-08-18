@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+
+# Generated dashboard (reproducible via build_dashboard.py)
+# dashboard.html is committed too, so it stays optional to ignore:
+# dashboard.html
+
+# OS
+.DS_Store
+Thumbs.db
