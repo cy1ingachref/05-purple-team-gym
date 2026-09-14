@@ -4,9 +4,7 @@
 
 A reproducible purple-team simulation where an adaptive RED attacker and an adaptive BLUE defender **coevolve** over 200 rounds — learning against each other until they reach a measurable equilibrium.
 
-> **Why this exists.** Most security demos are one-shot: "here is a tool that finds a bug." This is a *living* system where two autonomous agents adapt to each other in real time. The emergent behavior — an arms race that converges — is what makes it a portfolio piece worth discussing in an interview.
-
-## The narrative (read this first)
+> **Why this exists.** Most security demos are one-shot: "here is a tool that finds a bug." This is a *living* system where two autonomous agents adapt to each other in real time.
 
 1. **RED** is a learning attacker — an epsilon-greedy bandit that keeps value estimates Q(technique) and concentrates fire on whatever is currently most effective. When BLUE patches a hole, RED's Q for it falls and RED pivots.
 
@@ -30,7 +28,7 @@ A reproducible purple-team simulation where an adaptive RED attacker and an adap
 | **CIS Controls mapping** | Maps converged posture to CIS v8 controls for governance. |
 | **CISO posture report** | Printable HTML report with risk levels and recommendations. |
 
-## The E-Tafakna connection
+## connection
 
 The first three techniques in the catalog are the **exact bug class found during an authorized pentest at E-Tafakna** (legal-tech SaaS):
 
