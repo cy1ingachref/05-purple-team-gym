@@ -1,4 +1,4 @@
-# 05 — Purple-Team Coevolution Gym
+# Purple-Team Coevolution Gym
 
 [![CI](https://github.com/cy1ingachref/05-purple-team-gym/actions/workflows/ci.yml/badge.svg)](https://github.com/cy1ingachref/05-purple-team-gym/actions/workflows/ci.yml)
 
