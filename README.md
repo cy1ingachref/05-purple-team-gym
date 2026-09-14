@@ -1,34 +1,111 @@
 # 05 — Purple-Team Coevolution Gym
 
-A reproducible purple-team simulation where an adaptive RED attacker and an adaptive BLUE defender coevolve over multiple rounds. The project emphasizes measurable learning, deterministic reproducibility, and an offline dashboard for visualization.
+[![CI](https://github.com/cy1ingachref/05-purple-team-gym/actions/workflows/ci.yml/badge.svg)](https://github.com/cy1ingachref/05-purple-team-gym/actions/workflows/ci.yml)
 
-Why this project matters
+A reproducible purple-team simulation where an adaptive RED attacker and an adaptive BLUE defender **coevolve** over 200 rounds — learning against each other until they reach a measurable equilibrium.
 
-- Demonstrates advanced modeling of attacker/defender dynamics and the ability to measure learning and recovery from novel threats.
-- Provides a tested, deterministic simulation with a self-contained dashboard suitable for demos and technical interviews.
+> **Why this exists.** Most security demos are one-shot: "here is a tool that finds a bug." This is a *living* system where two autonomous agents adapt to each other in real time. The emergent behavior — an arms race that converges — is what makes it a portfolio piece worth discussing in an interview.
 
-Highlights
+## The narrative (read this first)
 
-- Learning RED attacker (epsilon-greedy bandit)
-- Budget-constrained BLUE defender that reallocates coverage via residual-risk gradients
-- A zero-day shock at round 100 to demonstrate recovery and adaptation
-- Offline HTML dashboard (no external CDN) visualizing the arms race and metrics
+1. **RED** is a learning attacker — an epsilon-greedy bandit that keeps value estimates Q(technique) and concentrates fire on whatever is currently most effective. When BLUE patches a hole, RED's Q for it falls and RED pivots.
 
-Run
+2. **BLUE** is an adaptive defender — given a fixed security budget (3.0 points), it raises coverage of the defenses that mitigate the techniques RED is actually using (residual-risk gradient). It cannot cover everything — realistic trade-offs.
 
-python gym.py                # prints convergence and summary metrics
-python -m unittest tests.test_gym -v   # unit tests for learning + zero-day behavior
-python build_dashboard.py    # generates dashboard.html (open in a browser)
+3. **They coevolve.** RED adapts to BLUE's coverage, BLUE adapts to RED's pressure. The result: residual risk **decreases** over time and plateaus at a stable equilibrium. Both agents are learning. This is proven by tests, not scripted.
 
-Files
+4. **Zero-day shock.** At round 100, a hidden zero-day (base success 0.98) is revealed to RED, and the emergency patch becomes available to BLUE. Risk spikes. BLUE deploys the patch and recovers. The adaptation latency (~73 rounds) is measured and tested.
 
-- `techniques.py` — technique and defense catalog (includes JWT-related techniques)
-- `gym.py` — coevolution engine and round model
-- `build_dashboard.py` — emits the offline HTML dashboard
-- `dashboard.html` — generated visualization (open locally)
-- `tests/test_gym.py` — unit tests proving learning, convergence, and determinism
-- `GUIDE.md` — walkthrough and extension ideas
+## What makes it different
 
-Notes
+| Feature | Why it matters |
+|---------|---------------|
+| **Epsilon-greedy bandit RED** | Real RL, not scripted. Proven to learn by tests. |
+| **Budget-constrained BLUE** | Forces realistic trade-offs. Proven to fully spend budget by tests. |
+| **Zero-day shock + recovery** | Tests adaptation to the unknown. Proven by tests. |
+| **Deterministic (seed=42)** | Same result every run. Reproducible for demos. |
+| **Zero dependencies** | Pure Python stdlib. Runs anywhere. |
+| **Offline dashboard** | Self-contained HTML, no CDN, opens from `file://`. |
+| **Animated replay** | Watch the arms race unfold round-by-round. |
+| **CIS Controls mapping** | Maps converged posture to CIS v8 controls for governance. |
+| **CISO posture report** | Printable HTML report with risk levels and recommendations. |
 
-- The project is zero-dependency and deterministic by seed to make results reproducible for demos and interviews.
+## The E-Tafakna connection
+
+The first three techniques in the catalog are the **exact bug class found during an authorized pentest at E-Tafakna** (legal-tech SaaS):
+
+- `jwt_none` — alg=none forgery (base 0.95)
+- `jwt_weak_secret` — weak HMAC secret brute (base 0.85)
+- `jwt_strcmp` — verified by string equality (base 0.90)
+
+The gym literally teaches a defender to close the hole found in a real engagement. This grounds the simulation in reality, not theory.
+
+## Run it
+
+```bash
+# Run the simulation (prints convergence metrics)
+python gym.py
+
+# Run the test suite (14 tests, all must pass)
+python -m unittest tests.test_gym -v
+
+# Build the dashboard (opens in any browser, no server needed)
+python build_dashboard.py
+# -> dashboard.html (self-contained, ~150 KB)
+
+# Generate the CISO posture report
+python ciso_report.py
+# -> posture_report.html (printable, CIS-mapped)
+```
+
+## What the tests prove
+
+```
+test_residual_risk_decreases          — BLUE learns to reduce risk over time
+test_red_win_rate_decreases           — defense lowers attacker success
+test_blue_uses_full_budget            — rational allocation (no waste)
+test_same_seed_same_result            — deterministic, reproducible
+test_zeroday_causes_risk_spike        — zero-day creates measurable impact
+test_blue_deploys_emergency_patch     — defender adapts to unknown
+test_adaptation_latency_is_finite     — recovery happens within bounded rounds
+test_zeroday_unknown_before_shock     — RED can't use what it doesn't know
+test_defender_prioritizes_threatened_defense — gradient works
+```
+
+## Dashboard preview
+
+The dashboard shows:
+- RED win-rate + residual risk over 200 rounds (with zero-day shock marker)
+- BLUE coverage deployed vs budget
+- Convergence verdict (auto-colored)
+- Zero-day shock response (spike → peak → adaptation → recovery)
+- Final posture: BLUE coverage vs RED threat per technique
+- Technique risk-reduction table (E-Tafakna JWT bugs flagged with ★)
+- **Animated replay** — watch the arms race unfold round-by-round
+
+## CISO posture report
+
+The report maps each defense to a CIS Control v8 ID and produces:
+- Overall posture score (0-100)
+- Risk reduction percentage
+- Per-defense risk level (LOW/MEDIUM/HIGH)
+- CIS control mapping
+- Executive summary and recommendations
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `gym.py` | Coevolution engine (Attacker + Defender agents + round loop) |
+| `techniques.py` | Technique and defense catalog (includes E-Tafakna JWT bugs) |
+| `build_dashboard.py` | Generates the offline HTML dashboard |
+| `ciso_report.py` | Generates the CIS-mapped posture report |
+| `tests/test_gym.py` | 14 tests proving learning, convergence, and adaptation |
+| `GUIDE.md` | Step-by-step walkthrough of every component |
+
+## Notes
+
+- Zero dependencies (pure Python stdlib)
+- Deterministic by seed (reproducible for demos and interviews)
+- The dashboard is self-contained (no CDN, no network)
+- The posture report is printable (File → Print)

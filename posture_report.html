@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Security Posture Report — Purple-Team Gym</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; color: #1a1a22; font-size: 13px; line-height: 1.6; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 24px 0 10px; color: #333; border-bottom: 2px solid #6d5fd6; padding-bottom: 4px; }
+  .meta { color: #666; font-size: 12px; margin-bottom: 20px; }
+  .score { display: inline-block; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 18px; background: #f0eefb; color: #5b4fc0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e3e3ec; }
+  th { background: #f8f8fc; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric { display: inline-block; margin-right: 24px; }
+  .metric .val { font-weight: 700; font-size: 16px; }
+  .metric .lbl { font-size: 11px; color: #666; text-transform: uppercase; }
+  ul { margin: 6px 0; padding-left: 20px; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+  <h1>Security Posture Report</h1>
+  <div class="meta">Generated: 2026-09-14T17:35:26 | Purple-Team Coevolution Gym | Deterministic (seed=42)</div>
+
+  <div style="margin: 20px 0">
+    <div class="metric"><div class="val">100/100</div><div class="lbl">Posture Score</div></div>
+    <div class="metric"><div class="val">6%</div><div class="lbl">Risk Reduction</div></div>
+    <div class="metric"><div class="val">0.265</div><div class="lbl">Final RED Win Rate</div></div>
+    <div class="metric"><div class="val">0.278</div><div class="lbl">Final Residual Risk</div></div>
+  </div>
+
+  <h2>Executive Summary</h2>
+  <p>
+    A purple-team coevolution simulation was run for 200 rounds with a finite security budget.
+    An adaptive RED attacker (epsilon-greedy bandit) and an adaptive BLUE defender (residual-risk gradient)
+    learned against each other. The system converged to a stable equilibrium with a
+    <b>6% reduction in residual risk</b>.
+    A zero-day shock at round 100 tested the defender's ability to adapt to the unknown.
+  </p>
+
+  <h2>Zero-Day Response</h2>
+  
+        <p>At round <b>100</b> a zero-day token confusion vulnerability was discovered.</p>
+        <ul>
+            <li>Pre-shock risk: <b>0.245</b></li>
+            <li>Peak risk (spike): <b style="color:red">0.44</b></li>
+            <li>Adaptation latency: <b>73 rounds</b></li>
+            <li>Recovered risk: <b>0.283</b></li>
+        </ul>
+    
+
+  <h2>Defense Posture (mapped to CIS Controls v8)</h2>
+  <table>
+    <thead><tr><th>Defense</th><th>Coverage</th><th>Risk Level</th><th>CIS Control</th><th>Control Name</th></tr></thead>
+    <tbody><tr>
+            <td>Filesystem path confinement</td>
+            <td>0.00</td>
+            <td style="color:red;font-weight:700">HIGH</td>
+            <td>16.6</td>
+            <td>Establish and Maintain Secure Configuration Processes</td>
+        </tr><tr>
+            <td>Auth rate limiting</td>
+            <td>0.00</td>
+            <td style="color:red;font-weight:700">HIGH</td>
+            <td>16.10</td>
+            <td>Implement Application Layer Filtering</td>
+        </tr><tr>
+            <td>Impossible-travel geo-velocity check</td>
+            <td>0.00</td>
+            <td style="color:red;font-weight:700">HIGH</td>
+            <td>16.10</td>
+            <td>Implement Application Layer Filtering</td>
+        </tr><tr>
+            <td>Egress allowlist</td>
+            <td>0.00</td>
+            <td style="color:red;font-weight:700">HIGH</td>
+            <td>16.10</td>
+            <td>Implement Application Layer Filtering</td>
+        </tr><tr>
+            <td>Least-privilege IAM</td>
+            <td>0.00</td>
+            <td style="color:red;font-weight:700">HIGH</td>
+            <td>5.4</td>
+            <td>Restrict Administrator Privileges to Dedicated Administrator Accounts</td>
+        </tr><tr>
+            <td>Strict JWT signature verification</td>
+            <td>1.00</td>
+            <td style="color:green;font-weight:700">LOW</td>
+            <td>16.10</td>
+            <td>Implement Application Layer Filtering</td>
+        </tr><tr>
+            <td>Input validation / parameterized queries</td>
+            <td>1.00</td>
+            <td style="color:green;font-weight:700">LOW</td>
+            <td>16.6</td>
+            <td>Establish and Maintain Secure Configuration Processes</td>
+        </tr><tr>
+            <td>Emergency zero-day patch</td>
+            <td>1.00</td>
+            <td style="color:green;font-weight:700">LOW</td>
+            <td>7.3</td>
+            <td>Perform Automated Operating System Patch Management</td>
+        </tr></tbody>
+  </table>
+
+  <h2>Recommendations</h2>
+  <ul>
+    <li>Prioritize defenses with HIGH risk level (low coverage) for immediate investment.</li>
+    <li>The zero-day response shows adaptation is possible but takes 73 rounds — invest in threat intelligence to shorten this window.</li>
+    <li>Consider increasing the security budget to further reduce residual risk.</li>
+    <li>Map remaining gaps to CIS Controls for compliance reporting.</li>
+  </ul>
+</body>
+</html>

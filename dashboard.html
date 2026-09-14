@@ -14,10 +14,10 @@
          background:linear-gradient(90deg,#161b29,#0b0e14)}
   h1{margin:0;font-size:20px;letter-spacing:.5px}
   .sub{color:var(--muted);margin-top:4px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;padding:20px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;padding:20px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .card h2{margin:0 0 8px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-  canvas{width:100%;height:220px;display:block}
+  canvas{width:100%;height:200px;display:block;margin-top:8px}
   .verdict{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:700;font-size:12px}
   .ok{background:rgba(61,220,151,.15);color:var(--green);border:1px solid var(--green)}
   table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -27,6 +27,14 @@
   .legend span{margin-right:14px;font-size:12px;color:var(--muted)}
   .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
   footer{padding:14px 26px;color:var(--muted);border-top:1px solid var(--line);font-size:12px}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  button{background:var(--panel);color:var(--ink);border:1px solid var(--line);
+         padding:6px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px}
+  button:hover{background:var(--line)}
+  button.active{background:var(--blue);color:#000;border-color:var(--blue)}
+  .progress{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+  .progress-bar{height:100%;background:var(--blue);width:0;transition:width .1s}
+  .round-label{font-size:12px;color:var(--muted);min-width:80px}
 </style>
 </head>
 <body>
@@ -53,12 +61,23 @@
     <p style="color:var(--muted)" id="metrics"></p>
   </div>
   <div class="card">
-    <h2>⚡ Zero-day shock response</h2>
+    <h2>Zero-day shock response</h2>
     <p style="color:var(--muted)" id="shock"></p>
   </div>
   <div class="card">
     <h2>Final posture: RED threat vs BLUE coverage</h2>
     <canvas id="c3"></canvas>
+  </div>
+  <div class="card">
+    <h2>Animated replay</h2>
+    <div class="controls">
+      <button id="btn-play">Play</button>
+      <button id="btn-pause">Pause</button>
+      <button id="btn-reset">Reset</button>
+      <span class="round-label" id="round-label">Round 0</span>
+      <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+    </div>
+    <canvas id="c4" style="height:180px"></canvas>
   </div>
   <div class="card" style="grid-column:1/-1">
     <h2>Technique risk reduction (E-Tafakna JWT bugs flagged)</h2>
@@ -83,26 +102,23 @@ function lineChart(canvas, series, opts){
   const w = canvas.clientWidth, h = canvas.clientHeight;
   canvas.width=w*dpr; canvas.height=h*dpr;
   const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
-  const pad={l:34,r:10,t:10,b:20};
+  const pad={l:38,r:10,t:10,b:24};
   const n = series[0].points.length;
   let maxY=opts.maxY||0; for(const s of series) for(const v of s.points) maxY=Math.max(maxY,v);
   maxY = opts.maxY|| (maxY*1.1)||1;
-  const X = i => pad.l + (w-pad.l-pad.r)*(i/(n-1));
+  const X = i => pad.l + (w-pad.l-pad.r)*(i/Math.max(1,n-1));
   const Y = v => h-pad.b - (h-pad.t-pad.b)*(v/maxY);
   ctx.strokeStyle=C.line; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(pad.l,h-pad.b); ctx.lineTo(w-pad.r,h-pad.b); ctx.stroke();
-  // y gridlines
   ctx.fillStyle=C.muted; ctx.font='10px monospace';
   for(let g=0;g<=4;g++){const v=maxY*g/4; const y=Y(v);
     ctx.strokeStyle=C.line; ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(w-pad.r,y); ctx.stroke();
     ctx.fillText(v.toFixed(2), 4, y+3);}
-  // shock marker
-  if(DATA.shock && DATA.shock.round>0){
+  if(DATA.shock && DATA.shock.round>0 && !opts.skipShock){
     const xs=X(DATA.shock.round);
     ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.setLineDash([4,4]);
     ctx.beginPath(); ctx.moveTo(xs,pad.t); ctx.lineTo(xs,h-pad.b); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle=C.muted; ctx.fillText('⚡zero-day', xs+3, pad.t+10);
-  }
+    ctx.fillStyle=C.muted; ctx.fillText('zero-day', xs+3, pad.t+10);}
   for(const s of series){
     ctx.strokeStyle=s.color; ctx.lineWidth=2; ctx.beginPath();
     s.points.forEach((v,i)=>{const x=X(i),y=Y(v); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
@@ -114,7 +130,7 @@ function barChart(canvas, items, color){
   const dpr=window.devicePixelRatio||1;
   const w=canvas.clientWidth,h=canvas.clientHeight; canvas.width=w*dpr;canvas.height=h*dpr;
   const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
-  const pad={l:110,r:30,t:6,b:6};
+  const pad={l:120,r:30,t:6,b:6};
   const n=items.length, bw=(h-pad.t-pad.b)/n;
   const max=Math.max(...items.map(d=>d.v),0.01);
   ctx.font='11px monospace';
@@ -142,27 +158,24 @@ lineChart(document.getElementById('c2'),[{color:C.blue, points:cov}],{maxY:Math.
 
 // final posture
 const defIds=Object.keys(DATA.coverage_final);
-const covItems=defIds.map(d=>({label:DATA.defenses[d].slice(0,16), v:DATA.coverage_final[d]}));
+const covItems=defIds.map(d=>({label:DATA.defenses[d].slice(0,18), v:DATA.coverage_final[d]}));
 const techIds=Object.keys(DATA.threat_final);
-const thrItems=techIds.map(t=>({label:t.slice(0,16), v:DATA.threat_final[t]}));
-// combine into one canvas: top half coverage, bottom half threat
+const thrItems=techIds.map(t=>({label:t.slice(0,18), v:DATA.threat_final[t]}));
 (function(){
   const cv=document.getElementById('c3'); const dpr=window.devicePixelRatio||1;
   const w=cv.clientWidth,h=cv.clientHeight; cv.width=w*dpr;cv.height=h*dpr;
   const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
   const half=h/2;
-  // coverage (top)
   ctx.fillStyle=C.muted; ctx.font='10px monospace'; ctx.fillText('BLUE coverage',6,12);
   const cMax=Math.max(...covItems.map(d=>d.v),1);
   covItems.forEach((d,i)=>{const y=18+i*(half-18)/covItems.length; const bh=(half-18)/covItems.length*0.7;
     ctx.fillStyle=C.muted; ctx.fillText(d.label,4,y+bh);
-    ctx.fillStyle=C.blue; ctx.fillRect(120,y,(w-150)*(d.v/cMax),bh);});
-  // threat (bottom)
+    ctx.fillStyle=C.blue; ctx.fillRect(130,y,(w-160)*(d.v/cMax),bh);});
   const t0=half; ctx.fillStyle=C.muted; ctx.fillText('RED threat',6,t0+10);
   const tMax=Math.max(...thrItems.map(d=>d.v),0.01);
   thrItems.forEach((d,i)=>{const y=t0+16+i*(half-16)/thrItems.length; const bh=(half-16)/thrItems.length*0.7;
     ctx.fillStyle=C.muted; ctx.fillText(d.label,4,y+bh);
-    ctx.fillStyle=C.red; ctx.fillRect(120,y,(w-150)*(d.v/tMax),bh);});
+    ctx.fillStyle=C.red; ctx.fillRect(130,y,(w-160)*(d.v/tMax),bh);});
 })();
 
 // verdict
@@ -172,8 +185,8 @@ const v=document.getElementById('verdict');
 v.innerHTML = '<span class="verdict '+((converged?'ok':'')||'')+'">'+
   (converged?'CONVERGED — agents learned':'NOT CONVERGED')+'</span>';
 document.getElementById('metrics').innerHTML =
-  'RED win-rate: '+s.early_red_win_rate.toFixed(3)+' → '+s.late_red_win_rate.toFixed(3)+'<br>'+
-  'Residual risk: '+s.early_residual_risk.toFixed(3)+' → '+s.late_residual_risk.toFixed(3)+'<br>'+
+  'RED win-rate: '+s.early_red_win_rate.toFixed(3)+' -> '+s.late_red_win_rate.toFixed(3)+'<br>'+
+  'Residual risk: '+s.early_residual_risk.toFixed(3)+' -> '+s.late_residual_risk.toFixed(3)+'<br>'+
   'BLUE budget used: '+Object.values(DATA.coverage_final).reduce((a,b)=>a+b,0).toFixed(2);
 
 // shock card
@@ -182,10 +195,10 @@ const shEl=document.getElementById('shock');
 if(sh.round){
   shEl.innerHTML =
     'At round <b>'+sh.round+'</b> a zero-day appears.<br>'+
-    'Risk spikes '+sh.pre_shock_risk.toFixed(3)+' → <span class="hi">'+sh.peak_risk.toFixed(3)+'</span>.<br>'+
+    'Risk spikes '+sh.pre_shock_risk.toFixed(3)+' -> <span class="hi">'+sh.peak_risk.toFixed(3)+'</span>.<br>'+
     'BLUE deploys the emergency patch and recovers in <b>'+(sh.adaptation_latency||'?')+
     ' rounds</b> (recovered risk '+ (sh.recovered_risk!=null?sh.recovered_risk.toFixed(3):'-') +').<br>'+
-    '<span style="color:var(--green)">The defender adapts to the unknown — that is the point.</span>';
+    '<span style="color:var(--green)">The defender adapts to the unknown.</span>';
 } else {
   shEl.textContent='No shock scenario configured.';
 }
@@ -195,12 +208,109 @@ const tb=document.querySelector('#tt tbody');
 DATA.techniques.forEach(t=>{
   const tr=document.createElement('tr');
   const isJwt=['jwt_none','jwt_weak_secret','jwt_strcmp'].includes(t.id);
-  tr.innerHTML='<td class="'+(isJwt?'hi':'')+'">'+t.name+(isJwt?' ★':'')+'</td>'+
+  tr.innerHTML='<td class="'+(isJwt?'hi':'')+'">'+t.name+(isJwt?' *':'')+'</td>'+
     '<td class="tag">'+t.tactic+'</td><td>'+t.base+'</td><td>'+t.final+'</td>'+
-    '<td>'+(t.reduction>0?'−':'')+Math.abs(t.reduction).toFixed(2)+'</td>'+
+    '<td>'+(t.reduction>0?'-':'')+Math.abs(t.reduction).toFixed(2)+'</td>'+
     '<td class="tag">'+DATA.defenses[t.mit_by]+'</td>';
   tb.appendChild(tr);
 });
+
+// === ANIMATED REPLAY ===
+let animFrame = null;
+let animRound = 0;
+const btnPlay = document.getElementById('btn-play');
+const btnPause = document.getElementById('btn-pause');
+const btnReset = document.getElementById('btn-reset');
+const roundLabel = document.getElementById('round-label');
+const progressBar = document.getElementById('progress-bar');
+const c4 = document.getElementById('c4');
+
+function drawReplayFrame(round){
+  const dpr = window.devicePixelRatio||1;
+  const w = c4.clientWidth, h = c4.clientHeight;
+  c4.width=w*dpr; c4.height=h*dpr;
+  const ctx = c4.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+  
+  const pad={l:38,r:10,t:20,b:30};
+  const shown = H.slice(0, round+1);
+  const maxR = Math.max(...shown.map(h=>h.residual_risk), ...shown.map(h=>h.red_win_rate)) * 1.1 || 1;
+  
+  // axes
+  ctx.strokeStyle=C.line; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,h-pad.b); ctx.lineTo(w-pad.r,h-pad.b); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,h-pad.b); ctx.stroke();
+  
+  // labels
+  ctx.fillStyle=C.muted; ctx.font='10px monospace';
+  ctx.fillText('RED win', pad.l+4, pad.t+10);
+  ctx.fillStyle=C.muted;
+  ctx.fillText('risk', pad.l+4, pad.t+24);
+  
+  const X = i => pad.l + (w-pad.l-pad.r)*(i/N);
+  const Y = v => h-pad.b - (h-pad.t-pad.b)*(v/maxR);
+  
+  // RED win rate line
+  ctx.strokeStyle=C.red; ctx.lineWidth=2; ctx.beginPath();
+  shown.forEach((h,i)=>{const x=X(i),y=Y(h.red_win_rate); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.stroke();
+  
+  // Residual risk line
+  ctx.strokeStyle=C.green; ctx.lineWidth=2; ctx.beginPath();
+  shown.forEach((h,i)=>{const x=X(i),y=Y(h.residual_risk); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.stroke();
+  
+  // Current round marker
+  const curX = X(round);
+  ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(curX,pad.t); ctx.lineTo(curX,h-pad.b); ctx.stroke(); ctx.setLineDash([]);
+  
+  // Current attack indicator
+  const cur = H[round];
+  ctx.fillStyle=C.ink; ctx.font='11px monospace';
+  ctx.fillText('Attack: '+cur.attack, pad.l+4, h-pad.b-6);
+  ctx.fillStyle=cur.success?C.red:C.muted;
+  ctx.fillText(cur.success?'HIT':'MISS', pad.l+180, h-pad.b-6);
+  
+  // Update controls
+  roundLabel.textContent = 'Round '+round;
+  progressBar.style.width = ((round+1)/N*100)+'%';
+}
+
+function play(){
+  if(animRound >= N-1) animRound = 0;
+  btnPlay.classList.add('active');
+  btnPause.classList.remove('active');
+  function step(){
+    drawReplayFrame(animRound);
+    animRound++;
+    if(animRound >= N){
+      pause();
+      return;
+    }
+    animFrame = setTimeout(step, 50);
+  }
+  step();
+}
+
+function pause(){
+  btnPlay.classList.remove('active');
+  btnPause.classList.remove('active');
+  if(animFrame) clearTimeout(animFrame);
+}
+
+function reset(){
+  pause();
+  animRound = 0;
+  drawReplayFrame(0);
+}
+
+btnPlay.addEventListener('click', play);
+btnPause.addEventListener('pause', pause);
+btnReset.addEventListener('click', reset);
+
+// Initial draw
+drawReplayFrame(0);
 </script>
 </body>
 </html>
