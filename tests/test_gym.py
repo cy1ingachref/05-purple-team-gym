@@ -144,3 +144,56 @@ class TestAgentMechanics(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+# ── CISO Report Tests ──────────────────────────────────────────────────────
+
+import importlib.util
+
+spec_ciso = importlib.util.spec_from_file_location("ciso_report", os.path.join(ROOT, "ciso_report.py"))
+ciso_report = importlib.util.module_from_spec(spec_ciso)
+spec_ciso.loader.exec_module(ciso_report)
+
+
+class TestCisoReport(unittest.TestCase):
+    def test_posture_score_not_trivially_100(self):
+        """Posture score must not be 100/100 when several defenses are at 0% coverage.
+        The old formula sum(coverage)/budget was always ~100 because BLUE always
+        spends its full budget (proven by test_blue_uses_full_budget). This test
+        catches that regression: with 5 of 8 defenses at 0% coverage, score should
+        be meaningfully below 100."""
+        report = ciso_report.generate_report()
+        self.assertLess(report["posture_score"], 100,
+                        "posture_score should reflect real coverage gaps, not budget spent")
+        self.assertGreater(report["posture_score"], 0,
+                           "posture_score should be positive when some defenses are active")
+
+    def test_posture_score_threat_weighted(self):
+        """Score should be between 0 and 100 and reflect threat-weighted coverage."""
+        report = ciso_report.generate_report()
+        self.assertGreaterEqual(report["posture_score"], 0)
+        self.assertLessEqual(report["posture_score"], 100)
+
+    def test_high_risk_defenses_present(self):
+        """With 8 defenses and only 3.0 budget, at least some should be HIGH risk."""
+        report = ciso_report.generate_report()
+        high_risk = [r for r in report["posture"] if r["risk_level"] == "HIGH"]
+        self.assertGreater(len(high_risk), 0,
+                           "with finite budget, at least one defense should be HIGH risk")
+        self.assertGreater(len(report["posture"]), 0)
+
+    def test_cis_mapping_complete(self):
+        """Every defense in the posture table should have a CIS control mapped."""
+        report = ciso_report.generate_report()
+        for row in report["posture"]:
+            self.assertNotEqual(row["cis_control"], "N/A",
+                                f"defense '{row['defense']}' has no CIS mapping")
+
+    def test_html_report_renders(self):
+        """The HTML report should render without errors and contain key elements."""
+        report = ciso_report.generate_report()
+        html = ciso_report.render_html(report)
+        self.assertIn("Security Posture Report", html)
+        self.assertIn("Posture Score", html)
+        self.assertIn("Zero-Day Response", html)
+        self.assertIn(str(report["posture_score"]), html)

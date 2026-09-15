@@ -104,9 +104,19 @@ gym.py run_simulation():
     adaptation_latency (rounds until BLUE deploys the patch to >=0.5).
 
 Verified emergent arc (seed 42): risk 0.245 → spikes to 0.440 at the shock →
-BLUE deploys the patch → recovers; adaptation latency ~73 rounds. The 14 tests
+BLUE deploys the patch → recovers; adaptation latency ~73 rounds. The tests
 in test_gym.py assert the spike, the eventual patch deployment, a finite
 adaptation latency, and that RED never uses the zero-day before it is revealed.
+
+IMPORTANT FRAMING — "adaptation latency" is defined as rounds until BLUE deploys
+the emergency patch to 50% coverage, NOT until risk fully normalizes. At the
+adaptation point, recovered risk (0.283) is still noticeably above pre-shock
+(0.245). This is internally consistent but the README intentionally clarifies
+that "recovery" means "patch substantially deployed," not "risk back to
+pre-shock baseline." A CISO reading this will immediately ask "when did risk
+fully normalize?" — the honest answer is "we measure patch deployment speed,
+not full risk recovery, because risk is a continuous signal with no single
+'back to normal' threshold."
 
 ────────────────────────────────────────────────────────────────────────────
 PART E — How to make it even MORE amazing (stretch ideas, still open)
@@ -120,10 +130,32 @@ PART E — How to make it even MORE amazing (stretch ideas, still open)
    report you could hand a CISO.
 
 ────────────────────────────────────────────────────────────────────────────
+PART F — ciso_report.py (CISO posture report — threat-weighted score)
+────────────────────────────────────────────────────────────────────────────
+Maps converged BLUE posture to CIS Controls v8 and produces a printable HTML
+report.
+
+THE POSTURE SCORE FIX — this is the bug Claude caught in the purple-team gym review:
+
+  OLD (buggy): posture_score = sum(coverage) / budget * 100
+      → Always ~100 because BLUE always spends full budget (test_blue_uses_full_budget).
+      → Contradiction: "100/100 posture but 5/8 defenses are HIGH risk?" — a CISO would catch this.
+
+  NEW (threat-weighted): posture_score = sum(coverage[d] * threat_pressure[d]) / sum(threat_pressure[d]) * 100
+      → Measures what fraction of the threat surface is actively mitigated.
+      → Honest: a score of 100 requires covering every defense facing threat.
+      → With seed 42: score = 54/100 (3 defenses cover ~50% of threat pressure).
+
+The report also clarifies that "adaptation latency" = rounds to 50% patch
+deployment, not full risk recovery. At the adaptation point, risk has dropped
+from peak but may still exceed pre-shock baseline.
+
+────────────────────────────────────────────────────────────────────────────
 STEP-BY-STEP TO RUN & SCREENSHOT FOR YOUR README
 ────────────────────────────────────────────────────────────────────────────
   cd 05-purple-team-gym
   python gym.py                      # see metrics in terminal
   python -m unittest tests.test_gym -v
   python build_dashboard.py          # creates dashboard.html
+  python ciso_report.py              # creates posture_report.html
   # open dashboard.html, screenshot the arms-race charts -> put in README

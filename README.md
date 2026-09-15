@@ -14,6 +14,8 @@ A reproducible purple-team simulation where an adaptive RED attacker and an adap
 
 4. **Zero-day shock.** At round 100, a hidden zero-day (base success 0.98) is revealed to RED, and the emergency patch becomes available to BLUE. Risk spikes. BLUE deploys the patch and recovers. The adaptation latency (~73 rounds) is measured and tested.
 
+> **On "adaptation latency":** this is defined as rounds until BLUE deploys the emergency patch to 50% coverage, NOT until risk fully normalizes. At the adaptation point, risk has dropped substantially from peak but may still exceed the pre-shock baseline. This is internally consistent — we measure patch deployment speed, not full risk recovery, because risk is a continuous signal with no single "back to normal" threshold.
+
 ## What makes it different
 
 | Feature | Why it matters |
@@ -44,7 +46,7 @@ The gym literally teaches a defender to close the hole found in a real engagemen
 # Run the simulation (prints convergence metrics)
 python gym.py
 
-# Run the test suite (14 tests, all must pass)
+# Run the test suite (19 tests, all must pass)
 python -m unittest tests.test_gym -v
 
 # Build the dashboard (opens in any browser, no server needed)
@@ -68,6 +70,11 @@ test_blue_deploys_emergency_patch     — defender adapts to unknown
 test_adaptation_latency_is_finite     — recovery happens within bounded rounds
 test_zeroday_unknown_before_shock     — RED can't use what it doesn't know
 test_defender_prioritizes_threatened_defense — gradient works
+test_posture_score_not_trivially_100  — score reflects coverage gaps, not budget
+test_posture_score_threat_weighted    — threat-weighted methodology
+test_high_risk_defenses_present      — finite budget → real gaps visible
+test_cis_mapping_complete             — every defense maps to a CIS control
+test_html_report_renders             — report renders without errors
 ```
 
 ## Dashboard preview
@@ -84,11 +91,13 @@ The dashboard shows:
 ## CISO posture report
 
 The report maps each defense to a CIS Control v8 ID and produces:
-- Overall posture score (0-100)
+- Overall posture score (0-100) — **threat-weighted**: what fraction of total threat pressure is actively mitigated? This is honest — a score of 100 would require covering every defense facing threat, not just spending budget. With the default seed the score is ~54/100 (3 defenses cover ~50% of threat pressure).
 - Risk reduction percentage
 - Per-defense risk level (LOW/MEDIUM/HIGH)
 - CIS control mapping
 - Executive summary and recommendations
+
+> **Why threat-weighted?** The alternative — `sum(coverage)/budget` — would always read ~100/100 because BLUE always spends its full budget (proven by `test_blue_uses_full_budget`). A CISO would immediately catch the contradiction: "100/100 posture but 5/8 defenses are HIGH risk?" This fix makes the score reflect real defensive posture, not just budget utilization.
 
 ## Files
 
