@@ -32,7 +32,7 @@ A reproducible purple-team simulation where an adaptive RED attacker and an adap
 
 ## connection
 
-The first three techniques in the catalog are the **exact bug class found during an authorized pentest at E-Tafakna** (legal-tech SaaS):
+The first three techniques in the catalog are the **exact bug class found during an authorized pentest** (legal-tech SaaS):
 
 - `jwt_none` — alg=none forgery (base 0.95)
 - `jwt_weak_secret` — weak HMAC secret brute (base 0.85)
@@ -85,7 +85,7 @@ The dashboard shows:
 - Convergence verdict (auto-colored)
 - Zero-day shock response (spike → peak → adaptation → recovery)
 - Final posture: BLUE coverage vs RED threat per technique
-- Technique risk-reduction table (E-Tafakna JWT bugs flagged with ★)
+- Technique risk-reduction table (JWT bugs flagged with ★)
 - **Animated replay** — watch the arms race unfold round-by-round
 
 ## CISO posture report
@@ -104,7 +104,7 @@ The report maps each defense to a CIS Control v8 ID and produces:
 | File | Purpose |
 |------|---------|
 | `gym.py` | Coevolution engine (Attacker + Defender agents + round loop) |
-| `techniques.py` | Technique and defense catalog (includes E-Tafakna JWT bugs) |
+| `techniques.py` | Technique and defense catalog (includes JWT bugs) |
 | `build_dashboard.py` | Generates the offline HTML dashboard |
 | `ciso_report.py` | Generates the CIS-mapped posture report |
 | `tests/test_gym.py` | 14 tests proving learning, convergence, and adaptation |
